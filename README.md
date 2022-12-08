@@ -9,6 +9,9 @@ monitoramento da movimentação do robô, será desenvolvido um sistema que deve
 processar as leituras dos sensores, de forma concorrente, a partir de um buffer de tamanho
 finito N (fornecido pelo usuário).
 
+![alt text](https://raw.githubusercontent.com/ThaisBarrosAlvim/robo_drumonsters_like/main/contexto.png?token=GHSAT0AAAAAAB4FMGDXP7KFLT3M275V6IGQY4SMOPQ)
+
+
 Para cada posição do robô inserida no buffer, o sistema deverá fazer a fusão das informações
 das diferentes fontes (considerando a média das leituras atuais), além de calcular a velocidade
 e a aceleração atual do robô. Após o processamento dessas informações, elas deverão ser
