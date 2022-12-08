@@ -1,4 +1,4 @@
-# Robó Drumonsters Like
+# Robô Drumonsters Like
 
 ## Contextualização
 Considere um robô que se movimenta em uma sala de 300cm x 400cm. Para a análise da
