@@ -10,3 +10,17 @@ usuário é criado no começo do programa.
 
 Esboços iniciais por: Thaís Alvim, Gabriela Amorim e Brenda Gobira.
 Programado por Thaís Alvim.
+
+## Como Executar
+### Compilar:
+````shell
+g++ -pthread main.cpp -o projeto2SO 
+````
+### Execução (linux):
+````shell
+./projeto2SO 
+````
+### Execução (Windows):
+````cmd
+start projeto2SO.exe
+````
