@@ -8,8 +8,8 @@ usuário é criado no começo do programa.
 
 ![alt text](https://raw.githubusercontent.com/ThaisBarrosAlvim/robo_drumonsters_like/main/contexto.png?token=GHSAT0AAAAAAB4FMGDXP7KFLT3M275V6IGQY4SMOPQ)
 
-Esboços iniciais por: Thaís Alvim, Gabriela Amorim e Brenda Gobira.
-Programado por Thaís Alvim.
+**Esboços iniciais por:** Thaís Alvim, Gabriela Amorim e Brenda Gobira.  
+**Programado por:** Thaís Alvim.  
 
 ## Como Executar
 ### Compilar:
