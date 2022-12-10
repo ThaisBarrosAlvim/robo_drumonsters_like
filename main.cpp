@@ -5,67 +5,42 @@
 #include <semaphore.h>
 #include <queue>
 #include <cmath>
-#include <unordered_map>
 #include <sys/time.h>
+#include "Pos.h"
 
 using namespace std;
 
 
-class Pos {
-public:
-    int x{}, y{}, time{}, f{};
-
-    Pos();
-
-    Pos(int x, int y, int time, int f);
-
-    Pos &operator=(Pos);
-};
-
-Pos::Pos(int x, int y, int time, int f = -1) {
-    this->x = x;
-    this->y = y;
-    this->time = time;
-    this->f = f;
-}
-
-
-Pos::Pos() {
-    x = -1;
-    y = -1;
-    time = -1;
-    f = -1;
-}
-
+// Permite printarmos Pos utilizando cout << Pos();
 std::ostream &operator<<(std::ostream &os, Pos const &m) {
     return os << "(" << m.x << ", " << m.y << ") " ;
 //    return os << "(" << m.x << ", " << m.y << ") [" << m.time << "]" << " f:" << m.f << ", ";
 }
 
-Pos &Pos::operator=(Pos outra) {
-    this->x = outra.x;
-    this->y = outra.y;
-    this->time = outra.time;
-    this->f = outra.f;
-    return *this;
-}
 
 
+// Mudanças de sistemas
 #ifdef __linux__
 void clear_terminal(){
     system("clear");
+}
+void pause_run(){
 }
 #elif _WIN32
 void clear_terminal(){
     system("cls");
 }
+void pause_run(){
+    system("pause");
+}
 
 #endif
 
 
-
+//variaveis globais
 int N=0;
-int TIME_MAX = 100;
+int TIME_MAX = 0;
+
 //tamanho sala
 const int room_x = 300;
 const int room_y = 400;
@@ -73,7 +48,7 @@ const int room_y = 400;
 //memoria compartilhada
 int pos_x = 0;
 int pos_y = 0;
-int bfi = 0;
+unsigned long int bfi = 0;
 queue<Pos> buffer;
 
 //declaração mutex
@@ -81,8 +56,8 @@ sem_t mutex;
 
 
 void imprime_buffer(queue<Pos> gq) {
-//    usleep(10000);
-//    cout << "Buffer: [" << gq.size() << "]: ";
+    //    usleep(10000);
+    //    cout << "Buffer: [" << gq.size() << "]: ";
     queue<Pos> g = gq;
     while (!gq.empty()) {
         cout << gq.front();
@@ -101,7 +76,7 @@ inline int rand_pos() {
 void *tempo(void *arg) {
     struct timeval stop{}, start{};
     gettimeofday(&start, nullptr);
-    for (int i = 0; i < TIME_MAX; ++i) {
+    for (int i = 0; i < TIME_MAX*10; ++i) {
         // delay na resolução de 100ms
         usleep(1000 * 100);
         // adiciona +1 no indice do buffer
@@ -109,15 +84,17 @@ void *tempo(void *arg) {
     }
     gettimeofday(&stop, nullptr);
     printf("Rotina gastou %lu ms\n", ((stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec)/1000);
+    pause_run();
     exit(1);
 }
-
-
 
 //funcao que vai executar em paralelo
 void *fonte(void *arg) {
     int fontid = ((size_t) arg);
-    for (int i = 0; i < TIME_MAX; ++i) {
+    for (int i = 0; i < TIME_MAX*10; ++i) {
+        // Trava a execução se o buffer tiver cheio
+        while(buffer.size() >= N);
+
         //entrar na zona crítica
         sem_wait(&mutex);
 
@@ -133,19 +110,22 @@ void *fonte(void *arg) {
 
 
         // aloca o espaco e adiciona
+//        usleep(1000);
+//        cout << "T[" << bfi << "] add: " << Pos(pos_x, pos_y, bfi, fontid) << endl;
+//        usleep(1000);
+//        cout << "Back: " << buffer.back()<< endl;
         if (buffer.size() < N) {
-
-            if (buffer.front().time == bfi) {
-                //  cout << "Faz media!" << endl;
-                buffer.front().x = (buffer.front().x + pos_x) / 2;
-                buffer.front().y = (buffer.front().y + pos_y) / 2;
+            if (buffer.back().time == bfi) {
+//                cout << "Faz media!" << endl;
+                buffer.back().x = (buffer.back().x + pos_x) / 2;
+                buffer.back().y = (buffer.back().y + pos_y) / 2;
             }
                 // faz a media do existente com o que vai ser adicionado
             else {
                 buffer.push(Pos(pos_x, pos_y, bfi, fontid));
             }
         } else {
-//            cout << "Encheu o buffer!\n";
+            cout << "Encheu o buffer!\n";
         }
 
 
@@ -157,11 +137,13 @@ void *fonte(void *arg) {
 
         //delay especifico da fonte
         int old_bfi = bfi;
+        usleep(1000);
 //        cout << "T[" << bfi << "] -- Fonte(" << fontid << "): " << "Trava " << endl;
         while (true) {
             if (bfi != 0 && bfi != old_bfi && bfi % fontid == 0 && buffer.size() < N)
                 break;
         }
+//        usleep(1000);
 //        cout << endl << "T[" << bfi << "] -- Fonte(" << fontid << "): " << "Libera " << endl;
     }
 }
@@ -175,45 +157,26 @@ double calc_aceleracao(double v1, double v2) {
     return (v2-v1)/100;
 }
 
-void clean_unordered_map(unordered_map<int, Pos> &map, int start, int end){
-//    cout << "Limpa o mapa: " << start << " a "<< end << " size: " << map.size() <<endl;
-    for (int i = start; i < end; ++i) {
-        map.erase(i);
-    }
-}
 
-
+// Rotina de processamento
 [[noreturn]] void *processamento(void *arg) {
     Pos data, data_last;
-    unordered_map<int, Pos> posicoes;
-    int pi = 0, clean_time=0;
+    size_t pi = 0; // contador de processamento
     double velocidade_atual, velocidade_passada;
     while (true) {
         //entrar na zona crítica
         sem_wait(&mutex);
-//        cout << "\nT[" << bfi << "] -- Processamento Libera\n";
-        imprime_buffer(buffer);
-
+//        imprime_buffer(buffer);
         data = buffer.front();
         buffer.pop();
 
         //sair da zona crítica
         sem_post(&mutex);
 
-        // Faz a media das posições iguais
-        if (posicoes.count(data.time)) {
-//            usleep(1000);
-//            cout << "Faz media! (procs) time: " << data.time << endl;
-            posicoes[data.time].x = (posicoes[data.time].x + data.x) / 2;
-            posicoes[data.time].y = (posicoes[data.time].y + data.y) / 2;
-            data = posicoes[data.time]; // atualiza data para o valor da media
-        }
-        else{
-            posicoes[data.time] = data;
-        }
-
         // Printa posição
+
         clear_terminal();
+
         cout << "Tempo: " << bfi*100 << " ms" << endl;
         cout << "Posição: " << data << endl;
         // Printa velocidadee
@@ -237,14 +200,14 @@ void clean_unordered_map(unordered_map<int, Pos> &map, int start, int end){
         }
         cout << endl;
 
+        // Delay de processamento, só acontece se o buffer tiver em 90% de sua capacidade
+        if (buffer.size() < N-lround(N/10))
+            usleep(1000*105);
+
         pi++;
-        // Limpeza automatica das posições que ficam "cacheadas" para que sejam feitas as medias
-        if (posicoes.size() > 60 && bfi%30==0){
-            clean_unordered_map(posicoes, clean_time, bfi-30);
-            clean_time += 30;
-        }
+
         // Travamento caso o buffer esteja pequeno
-        while (buffer.size() != N);
+        while (buffer.empty());
 
     }
 }
@@ -257,24 +220,39 @@ void start_routine() {
 
     buffer.push(Pos(pos_x, pos_y, bfi));
     bfi++;
-    imprime_buffer(buffer);
+//    imprime_buffer(buffer);
 }
 
 int main(int argc, char *argv[]) {
     // Inicia semente de randomizacao
     srand(time(nullptr));
 
-    //Pergunta o tamanho do buffer
-//    while(N <= 0){
-//        cout << "Digite um valor para o tamanho do buffer: ";
-//        cin >> N;
-//        if (N <= 0) {
-//            cout << "Valor invalido, deve ser maior que 0!\n";
-//        } else {
-//            break;
-//        }
-//    }
-    N = 10;
+
+    //    Pergunta o tamanho do buffer
+//    N = 10; // TODO remove 0
+    while(N <= 0){
+        cout << "Digite um valor para o tamanho do buffer: ";
+        cin >> N;
+        if (N <= 0) {
+            cout << "Valor invalido, deve ser maior que 0!\n";
+        } else {
+            break;
+        }
+    }
+
+    //    Pergunta tempo de execução
+//    TIME_MAX = 1; // TODO remove
+    while(TIME_MAX <= 0){
+        cout << "Digite um valor para o tempo de execução da rotina em segundos: ";
+        cin >> TIME_MAX;
+        if (TIME_MAX <= 0) {
+            cout << "Valor invalido, deve ser maior que 0!\n";
+        } else {
+            break;
+        }
+    }
+
+
 
     // Inicia os valores
     start_routine();
@@ -301,9 +279,5 @@ int main(int argc, char *argv[]) {
     pthread_join(f2, nullptr);
     pthread_join(f3, nullptr);
 
-//    cout << "post_x: " << pos_x << endl;
-//    cout << "post_y: " << pos_y << endl;
-//    cout << "buffer: " << endl;
-    imprime_buffer(buffer);
     return 0;
 }
