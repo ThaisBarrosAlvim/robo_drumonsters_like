@@ -14,15 +14,15 @@ usuário é criado no começo do programa.
 ## Como Executar
 ### Compilar:
 ````shell
-g++ -pthread main.cpp -o projeto2SO 
+g++ -pthread main.cpp -o auto_robo
 ````
 ### Execução (linux):
 ````shell
-./projeto2SO 
+./auto_robo 
 ````
 ### Execução (Windows):
 ````cmd
-start projeto2SO.exe
+start auto_robo.exe
 ````
 
 ## Programa em funcionamento
