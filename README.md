@@ -33,6 +33,6 @@ Neste modo você deve responder "n" quando perguntado sobre iniciar em modo DEBU
 
 ### Rodando em modo Debug
 Neste modo você deve responder "s" quando perguntado sobre iniciar em modo DEBUG no começo da execução do programa  
-Obs: Cada item impresso do buffer segue o padrão: (posição_x, posição_y) /[tempo em que foi pego] f: delay da fonte em resolução 100ms. Ex: 1=100ms. E -1 é a posição inicial.
+Obs: Cada item impresso do buffer segue o padrão: (posição_x, posição_y) [tempo em que foi pego] f: delay da fonte em resolução 100ms. Ex: 1=100ms. E -1 é a posição inicial.
   
 ![exemplo_debug](https://raw.githubusercontent.com/ThaisBarrosAlvim/robo_drumonsters_like/main/imagens/exemplo_debug.png?token=GHSAT0AAAAAAB4FMGDXL6OXZFOKSWCCPOQSY4VGWOQ)
