@@ -14,7 +14,7 @@ usuário é criado no começo do programa.
 ## Como Executar
 ### Compilar:
 ````shell
-g++ -pthread main.cpp -o auto_robo
+g++ -pthread main.cpp Pos.cpp Pos.h -o auto_robo
 ````
 ### Execução (linux):
 ````shell
