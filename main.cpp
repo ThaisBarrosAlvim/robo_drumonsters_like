@@ -11,11 +11,7 @@
 using namespace std;
 
 
-// Permite printarmos Pos utilizando cout << Pos();
-std::ostream &operator<<(std::ostream &os, Pos const &m) {
-    return os << "(" << m.x << ", " << m.y << ") " ;
-//    return os << "(" << m.x << ", " << m.y << ") [" << m.time << "]" << " f:" << m.f << ", ";
-}
+
 
 
 
@@ -40,6 +36,7 @@ void pause_run(){
 //variaveis globais
 int N=0;
 int TIME_MAX = 0;
+bool DEBUG = false;
 
 //tamanho sala
 const int room_x = 300;
@@ -54,13 +51,20 @@ queue<Pos> buffer;
 //declaração mutex
 sem_t mutex;
 
+// Permite printarmos Pos utilizando cout << Pos();
+std::ostream &operator<<(std::ostream &os, Pos const &m) {
+    if (DEBUG)
+        return os << "(" << m.x << ", " << m.y << ") [" << m.time << "]" << " f:" << m.f;
+    else
+        return os << "(" << m.x << ", " << m.y << ")";
+}
 
 void imprime_buffer(queue<Pos> gq) {
-    //    usleep(10000);
-    //    cout << "Buffer: [" << gq.size() << "]: ";
+    usleep(10000);
+    cout << "Buffer: [" << gq.size() << "]: ";
     queue<Pos> g = gq;
     while (!gq.empty()) {
-        cout << gq.front();
+        cout << gq.front() << ", ";
         g.push(gq.front());
         gq.pop();
     }
@@ -73,6 +77,7 @@ inline int rand_pos() {
     return (rand() % 21) - 10;
 }
 
+// Thread que controla o tempo
 void *tempo(void *arg) {
     struct timeval stop{}, start{};
     gettimeofday(&start, nullptr);
@@ -110,13 +115,12 @@ void *fonte(void *arg) {
 
 
         // aloca o espaco e adiciona
-//        usleep(1000);
-//        cout << "T[" << bfi << "] add: " << Pos(pos_x, pos_y, bfi, fontid) << endl;
-//        usleep(1000);
-//        cout << "Back: " << buffer.back()<< endl;
         if (buffer.size() < N) {
             if (buffer.back().time == bfi) {
-//                cout << "Faz media!" << endl;
+                if (DEBUG){
+                    usleep(1000);
+                    cout << "Media entre " << buffer.back() << " e " << Pos(pos_x, pos_y, bfi, fontid) << endl;
+                }
                 buffer.back().x = (buffer.back().x + pos_x) / 2;
                 buffer.back().y = (buffer.back().y + pos_y) / 2;
             }
@@ -125,11 +129,9 @@ void *fonte(void *arg) {
                 buffer.push(Pos(pos_x, pos_y, bfi, fontid));
             }
         } else {
-            cout << "Encheu o buffer!\n";
+            if (DEBUG)
+                cout << "Encheu o buffer!\n";
         }
-
-
-//        imprime_buffer(buffer);
 
         //sair da zona crítica
         sem_post(&mutex);
@@ -137,14 +139,10 @@ void *fonte(void *arg) {
 
         //delay especifico da fonte
         int old_bfi = bfi;
-        usleep(1000);
-//        cout << "T[" << bfi << "] -- Fonte(" << fontid << "): " << "Trava " << endl;
         while (true) {
             if (bfi != 0 && bfi != old_bfi && bfi % fontid == 0 && buffer.size() < N)
                 break;
         }
-//        usleep(1000);
-//        cout << endl << "T[" << bfi << "] -- Fonte(" << fontid << "): " << "Libera " << endl;
     }
 }
 
@@ -166,19 +164,24 @@ double calc_aceleracao(double v1, double v2) {
     while (true) {
         //entrar na zona crítica
         sem_wait(&mutex);
-//        imprime_buffer(buffer);
+        if (DEBUG){
+            imprime_buffer(buffer);
+        }
+        // Remove posição do buffer
         data = buffer.front();
         buffer.pop();
 
         //sair da zona crítica
         sem_post(&mutex);
 
-        // Printa posição
+        // Limpa a tela
+        if (!DEBUG)
+            clear_terminal();
 
-        clear_terminal();
-
+        // Printa tempo, posição
         cout << "Tempo: " << bfi*100 << " ms" << endl;
         cout << "Posição: " << data << endl;
+
         // Printa velocidadee
         if (pi == 0) {
             cout << "Velocidade: Aguardando mais dados..." << endl;
@@ -200,13 +203,13 @@ double calc_aceleracao(double v1, double v2) {
         }
         cout << endl;
 
-        // Delay de processamento, só acontece se o buffer tiver em 90% de sua capacidade
-        if (buffer.size() < N-lround(N/10))
+        // Delay de processamento, só acontece se o buffer tiver com menos de 80% de sua capacidade
+        if (buffer.size() < N-lround(N/10)*2)
             usleep(1000*105);
 
         pi++;
 
-        // Travamento caso o buffer esteja pequeno
+        // Travamento caso o buffer esteja vazio
         while (buffer.empty());
 
     }
@@ -216,11 +219,9 @@ void start_routine() {
     // Inicia as posições com valores aleatorios
     pos_x = rand() % room_x;
     pos_y = rand() % room_y;
-//    cout << "Iniciou na posição: (" << pos_x << ", " << pos_y << ")" << endl;
 
     buffer.push(Pos(pos_x, pos_y, bfi));
     bfi++;
-//    imprime_buffer(buffer);
 }
 
 int main(int argc, char *argv[]) {
@@ -228,8 +229,7 @@ int main(int argc, char *argv[]) {
     srand(time(nullptr));
 
 
-    //    Pergunta o tamanho do buffer
-//    N = 10; // TODO remove 0
+    //  Pergunta o tamanho do buffer
     while(N <= 0){
         cout << "Digite um valor para o tamanho do buffer: ";
         cin >> N;
@@ -240,8 +240,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    //    Pergunta tempo de execução
-//    TIME_MAX = 1; // TODO remove
+    //  Pergunta tempo de execução
     while(TIME_MAX <= 0){
         cout << "Digite um valor para o tempo de execução da rotina em segundos: ";
         cin >> TIME_MAX;
@@ -252,7 +251,19 @@ int main(int argc, char *argv[]) {
         }
     }
 
-
+    //  Pergunta se quer iniciar em modo debug
+    char res_debug = 'z';
+    while(res_debug != 's' and res_debug != 'n'){
+        cout << "Quer iniciar em modo DEBUG ? [s/n] ";
+        cin >> res_debug;
+        if (res_debug != 's' and res_debug != 'n') {
+            cout << "Resposta invalida, deve ser 's' ou 'n'!\n";
+        } else {
+            DEBUG = res_debug == 's';
+            break;
+        }
+    }
+    cout << endl << endl;
 
     // Inicia os valores
     start_routine();
