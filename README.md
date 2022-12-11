@@ -8,7 +8,7 @@ usuário é criado no começo do programa.
 
 ![diagrama](https://raw.githubusercontent.com/ThaisBarrosAlvim/robo_drumonsters_like/main/imagens/diagrama.png?token=GHSAT0AAAAAAB4FMGDXSHMXUIGJBO6DGP7UY4VGWJQ)
 
-**Esboços iniciais por:** Thaís Alvim, Gabriela Amorim e Brenda Gobira.  
+**Analise do Problema:** Thaís Alvim, Gabriela Amorim e Brenda Gobira.  
 **Programado por:** Thaís Alvim.  
 
 ## Como Executar
