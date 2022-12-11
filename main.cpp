@@ -10,11 +10,6 @@
 
 using namespace std;
 
-
-
-
-
-
 // Mudanças de sistemas
 #ifdef __linux__
 void clear_terminal(){
@@ -144,6 +139,7 @@ void *fonte(void *arg) {
                 break;
         }
     }
+    return nullptr;
 }
 
 double calc_velocidade(Pos pos1, Pos pos2) {
@@ -224,7 +220,7 @@ void start_routine() {
     bfi++;
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     // Inicia semente de randomizacao
     srand(time(nullptr));
 
