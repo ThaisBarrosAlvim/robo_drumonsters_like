@@ -32,6 +32,7 @@ void pause_run(){
 int N=0;
 int TIME_MAX = 0;
 bool DEBUG = false;
+bool DEBUG_PRINT = false;
 
 //tamanho sala
 const int room_x = 300;
@@ -42,16 +43,30 @@ int pos_x = 0;
 int pos_y = 0;
 unsigned long int bfi = 0;
 queue<Pos> buffer;
+queue<int> buffer_sizes;
 
 //declaração mutex
 sem_t mutex;
 
 // Permite printarmos Pos utilizando cout << Pos();
 std::ostream &operator<<(std::ostream &os, Pos const &m) {
-    if (DEBUG)
+    if (DEBUG_PRINT)
         return os << "(" << m.x << ", " << m.y << ") [" << m.time << "]" << " f:" << m.f;
     else
         return os << "(" << m.x << ", " << m.y << ")";
+}
+
+
+void imprime_buffer_sizes(queue<int> gq) {
+    usleep(10000);
+    queue<int> g = gq;
+    while (!gq.empty()) {
+        cout << gq.front() << "\t";
+        g.push(gq.front());
+        gq.pop();
+    }
+    cout << '\n';
+    gq = g;
 }
 
 void imprime_buffer(queue<Pos> gq) {
@@ -81,9 +96,14 @@ void *tempo(void *arg) {
         usleep(1000 * 100);
         // adiciona +1 no indice do buffer
         bfi++;
+        buffer_sizes.push(buffer.size());
     }
     gettimeofday(&stop, nullptr);
     printf("Rotina gastou %lu ms\n", ((stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec)/1000);
+    if (DEBUG){
+        cout << "Tamanhos do buffer pela execucao: " << endl;
+        imprime_buffer_sizes(buffer_sizes);
+    }
     pause_run();
     exit(1);
 }
