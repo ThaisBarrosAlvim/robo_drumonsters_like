@@ -2,8 +2,8 @@
 // Created by thais on 10/12/22.
 //
 
-#ifndef PROJETO2SO_POS_H
-#define PROJETO2SO_POS_H
+#ifndef ROBO_POS_H
+#define ROBO_POS_H
 
 
 
@@ -22,4 +22,4 @@ public:
 
 
 
-#endif //PROJETO2SO_POS_H
+#endif //ROBO_POS_H
