@@ -68,7 +68,7 @@ void imprime_buffer(queue<Pos> gq) {
     gq = g;
 }
 
-
+// Retorna valor entre -10 e 10
 inline int rand_pos() {
     return (rand() % 21) - 10;
 }
